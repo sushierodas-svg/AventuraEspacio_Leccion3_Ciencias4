@@ -43,7 +43,7 @@
         }
     </style>
 </head>
-<body class="bg-space text-white h-full overflow-hidden select-none flex flex-col justify-between">
+<body class="bg-space text-white min-h-screen overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between">
 
     <!-- Efecto de Estrellas de Fondo para el Espacio Exterior -->
     <div id="stars-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0 transition-opacity duration-1000"></div>
@@ -78,9 +78,9 @@
     </header>
 
     <!-- CONTENEDOR PRINCIPAL: Deslizador de Diapositivas (Estaciones) -->
-    <main class="relative z-10 flex-grow w-full max-w-5xl mx-auto px-4 py-3 flex flex-col justify-center overflow-hidden">
+    <main class="relative z-10 flex-grow w-full max-w-5xl mx-auto px-4 py-3 flex flex-col justify-center overflow-hidden min-h-[580px]">
         
-        <div id="slides-container" class="w-full flex transition-transform duration-500 ease-out h-full items-center">
+        <div id="slides-container" class="w-full flex transition-transform duration-500 ease-out items-stretch">
             
             <!-- ================= ESTACIÓN 0: INTRODUCCIÓN CON OWLARIS ASTRONAUTA ================= -->
             <div class="w-full flex-shrink-0 flex flex-col justify-between h-full py-2 space-y-4">
