@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es" class="min-h-screen">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoExploradores: Del Espacio al Suelo con Owlaris</title>
+    <!-- Tailwind CSS para diseño moderno, responsivo y ágil -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka para un diseño amigable e infantil de alta legibilidad -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            transition: background 1s ease, color 0.5s ease;
+        }
+        /* Fondos fluidos según la profundidad de la estación */
+        .bg-space {
+            background: radial-gradient(circle at center, #1e1b4b 0%, #090514 100%);
+        }
+        .bg-earth {
+            background: linear-gradient(to bottom, #0f172a 0%, #047857 50%, #064e3b 100%);
+        }
+        .bg-soil {
+            background: linear-gradient(to bottom, #064e3b 0%, #854d0e 60%, #451a03 100%);
+        }
+        /* Animación suave para que Owlaris flote en el espacio */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.9; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-space text-white min-h-screen overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between transition-colors duration-1000">
+
+    <!-- Efecto de Estrellas de Fondo para el Espacio Exterior -->
+    <div id="stars-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0 transition-opacity duration-1000"></div>
+
+    <!-- CABECERA: Barra de Progreso y Marcador de Estación -->
+    <header class="relative z-10 w-full px-4 pt-4 md:pt-6 pb-2 max-w-5xl mx-auto flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl animate-bounce">🦉🚀</span>
+                <h1 class="text-2xl md:text-3xl font-extrabold tracking-wide text-yellow-300 drop-shadow-md">EcoExploradores</h1>
+            </div>
+            <!-- Botón de Sonido -->
+            <button id="sound-toggle" onclick="toggleMute()" class="bg-indigo-900 border-2 border-indigo-400 text-base font-bold px-4 py-2 rounded-full flex items-center gap-2 transition-all active:scale-95 shadow-lg hover:bg-indigo-800">
+                <span id="sound-icon" class="text-lg">🔊</span> <span>Sonido</span>
+            </button>
+        </div>
+        
+        <!-- Mapa de Estaciones del Recorrido -->
+        <div class="relative mt-2 bg-black/60 backdrop-blur-md rounded-full p-2.5 border-2 border-white/20 flex justify-between items-center">
+            <!-- Línea de conexión de fondo -->
+            <div class="absolute left-6 right-6 h-2 bg-gray-700 rounded-full z-0"></div>
+            <div id="progress-line" class="absolute left-6 h-2 bg-gradient-to-r from-yellow-300 via-cyan-400 to-emerald-400 rounded-full z-0 transition-all duration-500" style="width: 0%;"></div>
+
+            <!-- Botones Interactivos de las Estaciones -->
+            <button onclick="goToStation(0)" class="station-dot relative z-10 w-10 h-10 rounded-full flex items-center justify-center bg-yellow-300 text-slate-900 font-bold text-lg transition-all duration-300 border-4 border-slate-900 focus:outline-none hover:scale-110" title="Inicio">🎬</button>
+            <button onclick="goToStation(1)" class="station-dot relative z-10 w-10 h-10 rounded-full flex items-center justify-center bg-gray-700 text-white font-bold text-lg transition-all duration-300 border-4 border-slate-900 focus:outline-none hover:scale-110" title="El Espacio">🪐</button>
+            <button onclick="goToStation(2)" class="station-dot relative z-10 w-10 h-10 rounded-full flex items-center justify-center bg-gray-700 text-white font-bold text-lg transition-all duration-300 border-4 border-slate-900 focus:outline-none hover:scale-110" title="Tierra Especial">🌍</button>
+            <button onclick="goToStation(3)" class="station-dot relative z-10 w-10 h-10 rounded-full flex items-center justify-center bg-gray-700 text-white font-bold text-lg transition-all duration-300 border-4 border-slate-900 focus:outline-none hover:scale-110" title="El Suelo">🌱</button>
+            <button onclick="goToStation(4)" class="station-dot relative z-10 w-10 h-10 rounded-full flex items-center justify-center bg-gray-700 text-white font-bold text-lg transition-all duration-300 border-4 border-slate-900 focus:outline-none hover:scale-110" title="La Biodiversidad">🐛</button>
+            <button onclick="goToStation(5)" class="station-dot relative z-10 w-10 h-10 rounded-full flex items-center justify-center bg-gray-700 text-white font-bold text-lg transition-all duration-300 border-4 border-slate-900 focus:outline-none hover:scale-110" title="Descubrimiento">🏆</button>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL: Deslizador de Diapositivas sin límites rígidos de altura -->
+    <main class="relative z-10 flex-grow w-full max-w-5xl mx-auto px-4 py-3 overflow-x-hidden flex flex-col justify-start">
+        
+        <div id="slides-container" class="w-full flex transition-transform duration-500 ease-out items-start">
+            
+            <!-- ================= ESTACIÓN 0: INTRODUCCIÓN CON OWLARIS ASTRONAUTA ================= -->
+            <div class="w-full flex-shrink-0 flex flex-col justify-between py-2 space-y-4">
+                <div class="text-center">
+                    <span class="inline-block bg-indigo-500/40 text-indigo-100 border-2 border-indigo-300 px-4 py-1 rounded-full text-base font-bold uppercase tracking-wider mb-1 animate-pulse">¡Misión Especial de Owlaris!</span>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-yellow-300 drop-shadow-md">La Bitácora de Owlaris</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border-2 border-white/20 max-w-4xl mx-auto flex-grow justify-center shadow-2xl">
+                    <!-- Owlaris con Traje de Astronauta Real -->
+                    <div class="col-span-1 md:col-span-5 flex flex-col items-center justify-center">
+                        <div class="relative w-48 h-48 md:w-56 md:h-56 animate-float flex items-center justify-center">
+                            <!-- Brillo aura espacial de fondo -->
+                            <div class="absolute w-40 h-40 bg-cyan-400/20 rounded-full blur-xl z-0"></div>
+                            
+                            <!-- Imagen oficial de Owlaris Astronauta -->
+                            <img src="owlaris-astronauta.png" alt="Owlaris Astronauta" class="w-44 h-44 md:w-52 md:h-52 object-contain z-10 relative drop-shadow-[0_10px_20px_rgba(0,0,0,0.6)]" onerror="this.onerror=null; this.src='https://placehold.co/200x200/1e1b4b/ffffff?text=Owlaris'">
+                        </div>
+                        <p class="text-yellow-300 text-xl mt-2 font-black text-center drop-shadow-md">¡Owlaris listo para explorar!</p>
+                    </div>
+
+                    <!-- Diálogo e Instrucciones con Letra Más Grande -->
+                    <div class="col-span-1 md:col-span-7 space-y-4 text-center md:text-left flex flex-col justify-center">
+                        <div class="bg-indigo-950/95 p-6 rounded-2xl border-l-8 border-yellow-400 shadow-lg">
+                            <p class="text-xl md:text-2xl leading-relaxed italic text-white font-extrabold">
+                                "¡Hola, pequeños exploradores del espacio! He navegado el gélido <strong>espacio exterior</strong> analizando otros mundos... Pero al regresar y pisar el <strong>suelo</strong> de casa, descubrí que la vida necesita <strong>condiciones de vida</strong> exactas, no solo un lugar donde estar. ¡Acompáñame a desvelar este secreto!"
+                            </p>
+                        </div>
+                        <div class="bg-slate-800/90 p-4 rounded-xl border-2 border-slate-700 shadow-md">
+                            <p class="text-lg text-yellow-200 font-bold">
+                                <span class="font-extrabold text-yellow-300 text-xl">🎯 Tu Gran Meta:</span> Investigar el Sistema Solar y aprender por qué el suelo terrestre es el refugio definitivo para la biodiversidad.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center pt-2">
+                    <button onclick="goToStation(1)" class="bg-yellow-300 hover:bg-yellow-200 text-slate-950 font-extrabold px-12 py-4 rounded-full text-2xl shadow-xl hover:shadow-yellow-400/40 transition-all duration-300 active:scale-95 animate-pulse border-b-4 border-yellow-600">
+                        ¡Iniciar Viaje Estelar! ✨
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= ESTACIÓN 1: INTERACTIVO DEL SISTEMA SOLAR ================= -->
+            <div class="w-full flex-shrink-0 flex flex-col justify-between py-2 space-y-4">
+                <div class="text-center">
+                    <span class="inline-block bg-blue-500/40 text-blue-100 border-2 border-blue-300 px-4 py-1 rounded-full text-base font-bold uppercase tracking-wider mb-1">Estación 1: Mundos de Fuego y Hielo</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-blue-300">Navegando el Sistema Solar</h2>
+                    <p class="text-lg text-gray-200 font-extrabold">Haz clic en los planetas para ver las duras condiciones ambientales analizadas por Owlaris.</p>
+                </div>
+
+                <!-- Visor del Sistema Solar -->
+                <div class="flex-grow flex flex-col md:flex-row gap-5 items-center max-w-4xl mx-auto w-full">
+                    
+                    <!-- Simulador Visual de Planetas -->
+                    <div class="w-full md:w-1/2 bg-slate-900/80 rounded-3xl p-5 border-2 border-white/20 flex flex-col items-center justify-center min-h-[180px] shadow-xl">
+                        <div class="relative w-full aspect-[2/1] bg-black/80 rounded-2xl overflow-hidden border-2 border-slate-700 flex items-center justify-around px-2 shadow-inner">
+                            
+                            <!-- El Sol -->
+                            <button onclick="selectPlanet('sun')" class="relative flex flex-col items-center justify-center transition-all hover:scale-125 active:scale-90 focus:outline-none group">
+                                <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-amber-500 animate-pulse shadow-2xl shadow-amber-500/60 flex items-center justify-center text-2xl border-2 border-amber-300">☀️</div>
+                                <span class="text-xs text-yellow-200 mt-2 font-extrabold bg-slate-950/90 px-1.5 py-0.5 rounded">Sol</span>
+                            </button>
+
+                            <!-- Planeta Rocoso (Marte) -->
+                            <button onclick="selectPlanet('rocky')" class="relative flex flex-col items-center justify-center transition-all hover:scale-125 active:scale-90 focus:outline-none group">
+                                <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-600 flex items-center justify-center text-2xl border-2 border-orange-400 shadow-lg">🥵</div>
+                                <span class="text-xs text-orange-200 mt-2 font-extrabold bg-slate-950/90 px-1.5 py-0.5 rounded">Marte</span>
+                            </button>
+
+                            <!-- Planeta Gigante de Gas (Júpiter) -->
+                            <button onclick="selectPlanet('gas')" class="relative flex flex-col items-center justify-center transition-all hover:scale-125 active:scale-90 focus:outline-none group">
+                                <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-amber-700 flex items-center justify-center text-3xl border-2 border-amber-600 shadow-lg relative">
+                                    🌪️
+                                    <div class="absolute inset-0 border-y-2 border-amber-400 rounded-full rotate-12 scale-125"></div>
+                                </div>
+                                <span class="text-xs text-amber-300 mt-2 font-extrabold bg-slate-950/90 px-1.5 py-0.5 rounded">Júpiter</span>
+                            </button>
+
+                            <!-- Planeta Helado (Neptuno) -->
+                            <button onclick="selectPlanet('ice')" class="relative flex flex-col items-center justify-center transition-all hover:scale-125 active:scale-90 focus:outline-none group">
+                                <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-500 flex items-center justify-center text-2xl border-2 border-blue-300 shadow-lg">🥶</div>
+                                <span class="text-xs text-blue-200 mt-2 font-extrabold bg-slate-950/90 px-1.5 py-0.5 rounded">Neptuno</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ficha Informativa de ALTA LEGIBILIDAD y ULTRA CONTRASTE -->
+                    <div id="planet-info" class="w-full md:w-1/2 bg-slate-950 p-6 rounded-3xl border-4 border-yellow-400 flex flex-col justify-center min-h-[220px] shadow-[0_0_25px_rgba(245,158,11,0.5)]">
+                        <!-- Invitación Inicial -->
+                        <div class="text-center py-4 space-y-3">
+                            <span class="text-6xl animate-bounce inline-block">🛰️</span>
+                            <p class="text-2xl text-yellow-300 font-black">¡Analizador de Owlaris!</p>
+                            <p class="text-lg text-white font-extrabold max-w-xs mx-auto">Selecciona un astro a la izquierda para analizar sus duras condiciones.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between max-w-4xl mx-auto w-full pt-4">
+                    <button onclick="goToStation(0)" class="bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-white px-8 py-3 rounded-full font-bold transition-all text-lg active:scale-95 shadow-md">Atrás</button>
+                    <button onclick="goToStation(2)" class="bg-blue-500 hover:bg-blue-400 text-slate-950 border-b-4 border-blue-700 px-8 py-3 rounded-full font-extrabold transition-all text-lg active:scale-95 shadow-lg">Explorar la Tierra 🌍</button>
+                </div>
+            </div>
+
+            <!-- ================= ESTACIÓN 2: LA TIERRA, LUGAR EXCEPCIONAL (REDUCIDO PARA CANVAS) ================= -->
+            <div class="w-full flex-shrink-0 flex flex-col justify-between py-2 space-y-4">
+                <div class="text-center">
+                    <span class="inline-block bg-emerald-500/40 text-emerald-100 border-2 border-emerald-300 px-4 py-1 rounded-full text-base font-bold uppercase tracking-wider mb-1">Estación 2: El Planeta Azul</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-emerald-300">¿Qué hace a la Tierra un lugar único?</h2>
+                    <p class="text-lg text-gray-200 font-extrabold">Activa los tres interruptores de la "Fórmula de la Vida" para ver florecer nuestro planeta.</p>
+                </div>
+
+                <!-- Simulación de la Biosfera Terrestre -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto items-center flex-grow w-full">
+                    
+                    <!-- Ilustración interactiva del planeta (Tamaño optimizado) -->
+                    <div class="bg-slate-900/80 p-4 rounded-3xl border-2 border-white/20 flex flex-col items-center justify-center min-h-[180px] shadow-xl">
+                        <div class="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center rounded-full transition-all duration-700 bg-slate-950 shadow-2xl" id="earth-canvas">
+                            <!-- Brillo atmosférico -->
+                            <div id="atmosphere" class="absolute inset-0 rounded-full border-4 border-cyan-400 opacity-0 transition-all duration-700 scale-105 animate-pulse"></div>
+                            
+                            <!-- Cambia según las condiciones activadas -->
+                            <span id="earth-emoji" class="text-7xl md:text-8xl transition-all duration-500 filter grayscale">🌑</span>
+                            
+                            <!-- Capas superpuestas -->
+                            <div id="water-layer" class="absolute bottom-1 right-1 text-3xl opacity-0 transition-opacity duration-500">💧</div>
+                            <div id="sun-layer" class="absolute top-1 left-1 text-3xl opacity-0 transition-opacity duration-500">☀️</div>
+                        </div>
+                        <p id="earth-status-text" class="text-base text-emerald-300 font-extrabold mt-3 text-center px-2">La Tierra está fría, oscura y vacía sin elementos biológicos.</p>
+                    </div>
+
+                    <!-- Panel de Controles Interactivos (Optimizado verticalmente) -->
+                    <div class="bg-indigo-950/60 p-4 rounded-3xl border-2 border-emerald-500/40 space-y-3 shadow-lg">
+                        <h3 class="text-lg font-extrabold text-emerald-300 uppercase tracking-wider">🛠️ Construye las Condiciones perfectas:</h3>
+                        
+                        <!-- Control 1: Agua -->
+                        <label class="flex items-center justify-between p-2.5 bg-slate-900/95 rounded-2xl border-2 border-slate-700 hover:border-cyan-400 transition-all cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">💧</span>
+                                <div>
+                                    <h4 class="font-extrabold text-base md:text-lg text-white">Agua en Estado Líquido</h4>
+                                    <p class="text-xs text-slate-300">¡Hidrata las células y forma océanos!</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="cond-water" onchange="updateEarthCondition()" class="w-8 h-8 rounded text-emerald-500 focus:ring-emerald-400 bg-slate-800 border-slate-600">
+                        </label>
+
+                        <!-- Control 2: Aire -->
+                        <label class="flex items-center justify-between p-2.5 bg-slate-900/95 rounded-2xl border-2 border-slate-700 hover:border-cyan-400 transition-all cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">🛡️</span>
+                                <div>
+                                    <h4 class="font-extrabold text-base md:text-lg text-white">Atmósfera de Gases</h4>
+                                    <p class="text-xs text-slate-300">Retiene aire respirable y bloquea rayos dañinos.</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="cond-air" onchange="updateEarthCondition()" class="w-8 h-8 rounded text-emerald-500 focus:ring-emerald-400 bg-slate-800 border-slate-600">
+                        </label>
+
+                        <!-- Control 3: Temperatura -->
+                        <label class="flex items-center justify-between p-2.5 bg-slate-900/95 rounded-2xl border-2 border-slate-700 hover:border-cyan-400 transition-all cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">🌡️</span>
+                                <div>
+                                    <h4 class="font-extrabold text-base md:text-lg text-white">Clima Templado</h4>
+                                    <p class="text-xs text-slate-300">Ni fuego extremo ni congelación eterna.</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="cond-temp" onchange="updateEarthCondition()" class="w-8 h-8 rounded text-emerald-500 focus:ring-emerald-400 bg-slate-800 border-slate-600">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-between max-w-4xl mx-auto w-full pt-4">
+                    <button onclick="goToStation(1)" class="bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-white px-8 py-3 rounded-full font-bold transition-all text-lg active:scale-95 shadow-md">Atrás</button>
+                    <button id="btn-next-earth" onclick="goToStation(3)" class="bg-gray-600 text-gray-400 px-8 py-3 rounded-full font-extrabold transition-all text-lg cursor-not-allowed border-b-4 border-gray-700 shadow-md" disabled>¡Falta algo en el suelo! ➔</button>
+                </div>
+            </div>
+
+            <!-- ================= ESTACIÓN 3: EL SUELO MILAGROSO Y SUS CAPAS ================= -->
+            <div class="w-full flex-shrink-0 flex flex-col justify-between py-2 space-y-4">
+                <div class="text-center">
+                    <span class="inline-block bg-amber-500/40 text-amber-100 border-2 border-amber-300 px-4 py-1 rounded-full text-base font-bold uppercase tracking-wider mb-1">Estación 3: Un Mundo Subterráneo</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-amber-300">¡El Suelo no es solo barro aburrido!</h2>
+                    <p class="text-lg text-gray-200 font-extrabold">Haz clic en cada capa del subsuelo para cavar profundo y revelar misterios ecológicos.</p>
+                </div>
+
+                <!-- Capas del Suelo con alta legibilidad -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto items-center flex-grow w-full">
+                    
+                    <!-- Diagrama de excavación vertical -->
+                    <div class="bg-slate-900/80 p-5 rounded-3xl border-2 border-white/20 flex flex-col gap-3 min-h-[180px] shadow-xl justify-center">
+                        <!-- Capa Superior -->
+                        <button onclick="inspectSoil('surface')" class="w-full py-3.5 px-5 bg-emerald-800 hover:bg-emerald-700 border-3 border-emerald-400 rounded-2xl text-left transition-all duration-300 transform hover:-translate-y-1 flex justify-between items-center shadow-lg group">
+                            <span class="font-extrabold text-base md:text-lg group-hover:text-yellow-200 text-white">🌱 Capa 1: Humus</span>
+                            <span class="text-2xl animate-pulse">🍂</span>
+                        </button>
+
+                        <!-- Capa Intermedia -->
+                        <button onclick="inspectSoil('middle')" class="w-full py-3.5 px-5 bg-amber-800 hover:bg-amber-700 border-3 border-amber-500 rounded-2xl text-left transition-all duration-300 transform hover:-translate-y-1 flex justify-between items-center shadow-lg group">
+                            <span class="font-extrabold text-base md:text-lg group-hover:text-yellow-200 text-white">🪱 Capa 2: Cultivo Activo</span>
+                            <span class="text-2xl animate-pulse">🐛</span>
+                        </button>
+
+                        <!-- Capa Profunda -->
+                        <button onclick="inspectSoil('bedrock')" class="w-full py-3.5 px-5 bg-stone-700 hover:bg-stone-650 border-3 border-stone-500 rounded-2xl text-left transition-all duration-300 transform hover:-translate-y-1 flex justify-between items-center shadow-lg group">
+                            <span class="font-extrabold text-base md:text-lg group-hover:text-yellow-200 text-white">🪨 Capa 3: Roca Madre</span>
+                            <span class="text-2xl animate-pulse">💎</span>
+                        </button>
+                    </div>
+
+                    <!-- Ficha de excavación con alta legibilidad -->
+                    <div id="soil-detail" class="bg-slate-950 p-6 rounded-3xl border-4 border-yellow-400 flex flex-col justify-center min-h-[220px] shadow-[0_0_25px_rgba(245,158,11,0.5)]">
+                        <div class="text-center py-6 space-y-3">
+                            <span class="text-6xl animate-bounce inline-block">⛏️</span>
+                            <p class="text-2xl text-yellow-300 font-black">¡Excavadora de Owlaris!</p>
+                            <p class="text-lg text-white font-extrabold max-w-xs mx-auto">Selecciona una capa terrestre a la izquierda para empezar a desenterrar secretos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between max-w-4xl mx-auto w-full pt-4">
+                    <button onclick="goToStation(2)" class="bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-white px-8 py-3 rounded-full font-bold transition-all text-lg active:scale-95 shadow-md">Atrás</button>
+                    <button onclick="goToStation(4)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 border-b-4 border-amber-700 px-8 py-3 rounded-full font-extrabold transition-all text-lg shadow-lg active:scale-95">Descubrir Mini-Seres ➔</button>
+                </div>
+            </div>
+
+            <!-- ================= ESTACIÓN 4: JUEGO DE BIODIVERSIDAD ================= -->
+            <div class="w-full flex-shrink-0 flex flex-col justify-between py-2 space-y-4">
+                <div class="text-center">
+                    <span class="inline-block bg-teal-500/40 text-teal-100 border-2 border-teal-300 px-4 py-1 rounded-full text-base font-bold uppercase tracking-wider mb-1">Estación 4: El Gran Hotel de la Vida</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-teal-300">Biodiversidad: Una Súper Red</h2>
+                    <p class="text-lg text-gray-200 font-extrabold">¡Un puñado de tierra contiene millones de microbios! Ayuda a Owlaris a asignar a cada uno su rol vital.</p>
+                </div>
+
+                <!-- Desafío interactivo de correspondencias -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto items-center flex-grow w-full">
+                    
+                    <!-- Tarjetas de Organismos -->
+                    <div class="bg-slate-900/80 p-4 rounded-3xl border-2 border-teal-500/40 space-y-3 shadow-xl">
+                        <h3 class="text-base font-extrabold text-teal-300 uppercase tracking-wider">🔬 1. Selecciona un Organismo:</h3>
+                        
+                        <div class="flex flex-col gap-2.5">
+                            <!-- Lombriz -->
+                            <button id="bio-opt-1" onclick="selectBioActor('worm')" class="bio-actor-btn p-3 bg-slate-800 hover:bg-slate-750 rounded-2xl border-2 border-slate-600 text-left flex items-center justify-between transition-all">
+                                <span class="font-extrabold text-base text-white">🪱 Lombriz de Tierra</span>
+                                <span class="status-badge bg-gray-600 text-sm px-3 py-1 rounded-full text-white font-bold">Seleccionar</span>
+                            </button>
+                            <!-- Hongos -->
+                            <button id="bio-opt-2" onclick="selectBioActor('fungi')" class="bio-actor-btn p-3 bg-slate-800 hover:bg-slate-750 rounded-2xl border-2 border-slate-600 text-left flex items-center justify-between transition-all">
+                                <span class="font-extrabold text-base text-white">🍄 Hongos y Microbios</span>
+                                <span class="status-badge bg-gray-600 text-sm px-3 py-1 rounded-full text-white font-bold">Seleccionar</span>
+                            </button>
+                            <!-- Raíces -->
+                            <button id="bio-opt-3" onclick="selectBioActor('plant')" class="bio-actor-btn p-3 bg-slate-800 hover:bg-slate-750 rounded-2xl border-2 border-slate-600 text-left flex items-center justify-between transition-all">
+                                <span class="font-extrabold text-base text-white">🌿 Raíces de Plantas</span>
+                                <span class="status-badge bg-gray-600 text-sm px-3 py-1 rounded-full text-white font-bold">Seleccionar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Destinos o Roles con Contraste Elevado -->
+                    <div class="bg-teal-950/60 p-4 rounded-3xl border-2 border-teal-500/40 space-y-3 flex flex-col justify-between min-h-[220px] shadow-xl">
+                        <h4 class="text-base font-extrabold text-teal-300 uppercase tracking-wider">🧪 2. Asígnale su Trabajo Ideal:</h4>
+                        
+                        <div class="space-y-2.5 flex-grow flex flex-col justify-around">
+                            <!-- Rol de Aireación -->
+                            <button onclick="matchWork('aeration')" class="work-target-btn w-full p-3 bg-slate-950 border-2 border-slate-700 hover:border-teal-400 rounded-2xl text-left text-sm text-teal-200 transition-all flex items-center gap-2.5">
+                                <span class="text-2xl">💨</span>
+                                <span class="font-extrabold text-white leading-tight">Abre túneles para que el aire y el agua entren al suelo profundo.</span>
+                            </button>
+                            
+                            <!-- Rol de Reciclaje -->
+                            <button onclick="matchWork('nutrients')" class="work-target-btn w-full p-3 bg-slate-950 border-2 border-slate-700 hover:border-teal-400 rounded-2xl text-left text-sm text-teal-200 transition-all flex items-center gap-2.5">
+                                <span class="text-2xl">🍂</span>
+                                <span class="font-extrabold text-white leading-tight">Descompone hojas muertas en súper nutrientes orgánicos.</span>
+                            </button>
+
+                            <!-- Rol de Soporte y Agarre -->
+                            <button onclick="matchWork('erosion')" class="work-target-btn w-full p-3 bg-slate-950 border-2 border-slate-700 hover:border-teal-400 rounded-2xl text-left text-sm text-teal-200 transition-all flex items-center gap-2.5">
+                                <span class="text-2xl">🛡️</span>
+                                <span class="font-extrabold text-white leading-tight">Sujeta fuertemente la tierra para que la lluvia no se la lleve.</span>
+                            </button>
+                        </div>
+
+                        <!-- Feedback del juego interactivo con alto contraste -->
+                        <div id="game-feedback" class="text-center text-base font-black text-yellow-300 bg-slate-950 p-2 rounded-xl border-2 border-yellow-400 shadow-md">
+                            ⚠️ ¡Selecciona un organismo primero!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between max-w-4xl mx-auto w-full pt-4">
+                    <button onclick="goToStation(3)" class="bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-white px-8 py-3 rounded-full font-bold transition-all text-lg active:scale-95 shadow-md">Atrás</button>
+                    <button id="btn-next-bio" onclick="goToStation(5)" class="bg-gray-600 text-gray-400 px-8 py-3 rounded-full font-extrabold transition-all text-lg cursor-not-allowed border-b-4 border-gray-700 shadow-md" disabled>Resolver Desafío Final ➔</button>
+                </div>
+            </div>
+
+            <!-- ================= ESTACIÓN 5: CONCLUSIÓN Y RETO FINAL ================= -->
+            <div class="w-full flex-shrink-0 flex flex-col justify-between py-2 space-y-4">
+                <div class="text-center">
+                    <span class="inline-block bg-amber-500/40 text-amber-100 border-2 border-amber-300 px-4 py-1 rounded-full text-base font-bold uppercase tracking-wider mb-1 animate-pulse">¡Misión Cumplida, Cadete de Ciencias!</span>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-yellow-300 drop-shadow">El Gran Logro de Owlaris</h2>
+                </div>
+
+                <!-- Tarjeta Final de Conclusión -->
+                <div class="bg-slate-900/85 p-6 rounded-3xl border-4 border-yellow-400 max-w-3xl mx-auto space-y-4 text-center md:text-left flex-grow flex flex-col justify-center shadow-2xl">
+                    <div class="flex flex-col md:flex-row items-center gap-5">
+                        <span class="text-7xl animate-bounce drop-shadow-md">🏆</span>
+                        <div>
+                            <h3 class="text-2xl font-extrabold text-yellow-300">¿Qué nos enseña Owlaris en esta misión?</h3>
+                            <p class="text-lg md:text-xl text-gray-100 leading-relaxed mt-2 font-extrabold">
+                                Enormes planetas orbitan en el <strong class="text-blue-300 font-extrabold">Sistema Solar</strong>, pero carecen de una capa fértil. El gran secreto de nuestra <strong class="text-emerald-300 font-extrabold">biodiversidad</strong> no es solo tener un lugar en el espacio exterior, sino proteger este valioso <strong class="text-yellow-300 font-black">suelo templado</strong> donde el agua, el aire y millones de pequeños amigos microscópicos trabajan sin descanso.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Caja de Notas del Diario Científico -->
+                    <div class="bg-amber-950/45 p-5 rounded-2xl border-2 border-yellow-500/40 text-center space-y-3 shadow-inner">
+                        <h4 class="text-xl font-extrabold text-yellow-200">✨ ¡Completa tu bitácora de explorador!</h4>
+                        <p class="text-base text-yellow-100 max-w-xl mx-auto leading-relaxed font-extrabold">
+                            ¡Estás listo para tu próxima gran aventura en casa! Dibuja tu propio planeta alienígena imaginando qué tipo de seres vivirían si su suelo fuera rocoso o arenoso, o usa una lupa para explorar los organismos activos que viven en el jardín, el patio o en las macetas de tu hogar.
+                        </p>
+                        <div class="flex flex-wrap justify-center gap-3 pt-2">
+                            <span class="text-sm bg-slate-950 font-bold px-4 py-2 rounded-full border border-slate-700">🔍 Buscar Biodiversidad</span>
+                            <span class="text-sm bg-slate-950 font-bold px-4 py-2 rounded-full border border-slate-700">🪐 Diseñar un Eco-Planeta</span>
+                            <span class="text-sm bg-slate-950 font-bold px-4 py-2 rounded-full border border-slate-700">📝 Registrar Notas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center pt-4">
+                    <button onclick="goToStation(0)" class="bg-gradient-to-r from-yellow-300 to-emerald-400 hover:from-yellow-200 hover:to-emerald-300 text-slate-950 font-extrabold px-12 py-4 rounded-full text-xl shadow-2xl transition-transform duration-300 active:scale-95 animate-pulse border-b-4 border-emerald-600">
+                        🔄 ¡Volver a Viajar por las Estaciones!
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- PIE DE PÁGINA: Totalmente limpio y funcional -->
+    <footer class="relative z-10 w-full text-center py-4 bg-black/60 backdrop-blur-sm border-t border-white/10 text-xs md:text-sm font-semibold text-gray-300">
+        Optimizado para pantallas móviles, tabletas y ordenadores.
+    </footer>
+
+    <!-- INTERACTIVIDAD Y SINTETIZADOR DE AUDIO -->
+    <script>
+        let currentStation = 0;
+        const totalStations = 6;
+        let isMuted = false;
+
+        // Estado del Simulador Terrestre (Estación 2)
+        const earthConditions = {
+            water: false,
+            air: false,
+            temp: false
+        };
+
+        // Estado del Minijuego de Biodiversidad (Estación 4)
+        let selectedBioActor = null;
+        const matchedActors = {
+            worm: false,
+            fungi: false,
+            plant: false
+        };
+
+        // Sintetizador de audio integrado usando Web Audio API
+        let audioCtx = null;
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(261.63, now); // Do
+                    osc.frequency.setValueAtTime(329.63, now + 0.1); // Mi
+                    osc.frequency.setValueAtTime(392.00, now + 0.2); // Sol
+                    osc.frequency.setValueAtTime(523.25, now + 0.3); // Do octava
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                    osc.start(now);
+                    osc.stop(now + 0.45);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.linearRampToValueAtTime(70, now + 0.2);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            } catch (e) {
+                console.log("Audio no soportado en este navegador");
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('sound-icon');
+            icon.innerText = isMuted ? '❌' : '🔊';
+            playSound('click');
+        }
+
+        function generateStars() {
+            const container = document.getElementById('stars-container');
+            container.innerHTML = '';
+            const starCount = window.innerWidth < 640 ? 35 : 90;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'absolute bg-white rounded-full opacity-70';
+                star.style.width = Math.random() * 2.5 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.top = Math.random() * 100 + '%';
+                star.style.left = Math.random() * 100 + '%';
+                if (Math.random() > 0.4) {
+                    star.classList.add('animate-pulse');
+                }
+                container.appendChild(star);
+            }
+        }
+
+        function goToStation(index) {
+            if (index < 0 || index >= totalStations) return;
+            currentStation = index;
+            playSound('click');
+
+            const container = document.getElementById('slides-container');
+            container.style.transform = `translateX(-${index * 100}%)`;
+
+            const progressPercent = (index / (totalStations - 1)) * 100;
+            document.getElementById('progress-line').style.width = `${progressPercent}%`;
+
+            const dots = document.querySelectorAll('.station-dot');
+            dots.forEach((dot, i) => {
+                if (i <= index) {
+                    dot.classList.remove('bg-gray-700', 'text-white');
+                    dot.classList.add('bg-yellow-300', 'text-slate-900', 'scale-110');
+                } else {
+                    dot.classList.remove('bg-yellow-300', 'text-slate-900', 'scale-110');
+                    dot.classList.add('bg-gray-700', 'text-white');
+                }
+            });
+
+            // Cambios de fondo según la profundidad de la estación
+            const body = document.body;
+            const stars = document.getElementById('stars-container');
+            if (index <= 1) {
+                body.className = "bg-space text-white min-h-screen overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between transition-colors duration-1000";
+                stars.style.opacity = '1';
+            } else if (index === 2) {
+                body.className = "bg-earth text-white min-h-screen overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between transition-colors duration-1000";
+                stars.style.opacity = '0.4';
+            } else {
+                body.className = "bg-soil text-white min-h-screen overflow-y-auto overflow-x-hidden select-none flex flex-col justify-between transition-colors duration-1000";
+                stars.style.opacity = '0.15';
+            }
+
+            // Hacer scroll suave hacia arriba al cambiar de estación para asegurar que vean todo desde el inicio
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const planetData = {
+            sun: {
+                title: "☀️ El Gigante Sol",
+                desc: "Es una inmensa bola de fuego y energía termonuclear. Hace tanto calor allí (+5,500 °C en superficie) que el suelo sólido no puede existir. ¡Cualquier objeto se evaporaría de inmediato!",
+                temp: "🌡️ Fuego Extremo (+5,500 °C)",
+                status: "❌ Sin Suelo Sólido"
+            },
+            rocky: {
+                title: "🥵 Marte (Planeta Seco)",
+                desc: "Su suelo es un desierto helado de óxido de hierro. Carece de agua líquida en la superficie y de materia orgánica protectora, haciendo imposible el cultivo de raíces o la vida biológica.",
+                temp: "🌡️ Frío Seco (-60 °C promedio)",
+                status: "❌ Suelo estéril"
+            },
+            gas: {
+                title: "🌪️ Júpiter (Torbellino)",
+                desc: "¡Es un planeta gigante gaseoso! No tiene una corteza sólida donde pararse ni tierra para cultivar. Está envuelto en tormentas titánicas de gases muy densos y tóxicos.",
+                temp: "🌡️ Gélido Hostil (-110 °C)",
+                status: "❌ Sin Corteza Terrestre"
+            },
+            ice: {
+                title: "🥶 Neptuno Helado",
+                desc: "Está tan alejado del Sol que se compone de una gruesa sopa de gases helados y agua congelada. Sin luz solar adecuada ni suelo cálido, la vida celular se detiene por completo.",
+                temp: "🌡️ Super Congelado (-200 °C)",
+                status: "❌ Temperatura Mortal"
+            }
+        };
+
+        function selectPlanet(key) {
+            playSound('click');
+            const data = planetData[key];
+            const infoBox = document.getElementById('planet-info');
+            infoBox.innerHTML = `
+                <div class="space-y-4 animate-pulse-slow">
+                    <h3 class="text-3xl md:text-4xl font-extrabold text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">${data.title}</h3>
+                    <p class="text-lg md:text-xl text-white leading-relaxed font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">${data.desc}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <span class="bg-blue-600 border-2 border-blue-400 px-4 py-2 rounded-xl text-base font-black text-center text-white shadow-lg">${data.temp}</span>
+                        <span class="bg-red-600 border-2 border-red-400 px-4 py-2 rounded-xl text-base font-black text-center text-white shadow-lg">${data.status}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateEarthCondition() {
+            playSound('click');
+            earthConditions.water = document.getElementById('cond-water').checked;
+            earthConditions.air = document.getElementById('cond-air').checked;
+            earthConditions.temp = document.getElementById('cond-temp').checked;
+
+            const earthEmoji = document.getElementById('earth-emoji');
+            const atmosphere = document.getElementById('atmosphere');
+            const earthStatus = document.getElementById('earth-status-text');
+            const btnNext = document.getElementById('btn-next-earth');
+
+            if (earthConditions.air) {
+                atmosphere.style.opacity = '0.7';
+            } else {
+                atmosphere.style.opacity = '0';
+            }
+
+            let activeCount = Object.values(earthConditions).filter(Boolean).length;
+
+            if (activeCount === 0) {
+                earthEmoji.innerText = "🌑";
+                earthEmoji.style.filter = "grayscale(100%)";
+                earthStatus.innerText = "La Tierra está fría, oscura y vacía sin elementos biológicos.";
+                btnNext.disabled = true;
+                btnNext.className = "bg-gray-600 text-gray-400 px-8 py-3 rounded-full font-extrabold transition-all text-lg cursor-not-allowed border-b-4 border-gray-700 shadow-md";
+            } else if (activeCount === 1) {
+                earthEmoji.innerText = "🪐";
+                earthEmoji.style.filter = "grayscale(65%)";
+                earthStatus.innerText = "¡Buen intento! Tienes un elemento básico... pero aún falta equilibrio biológico.";
+                btnNext.disabled = true;
+                btnNext.className = "bg-gray-600 text-gray-400 px-8 py-3 rounded-full font-extrabold transition-all text-lg cursor-not-allowed border-b-4 border-gray-700 shadow-md";
+            } else if (activeCount === 2) {
+                earthEmoji.innerText = "🌍";
+                earthEmoji.style.filter = "grayscale(30%)";
+                earthStatus.innerText = "¡Excelente avance! Agua y aire presentes, pero necesitamos la temperatura templada.";
+                btnNext.disabled = true;
+                btnNext.className = "bg-gray-600 text-gray-400 px-8 py-3 rounded-full font-extrabold transition-all text-lg cursor-not-allowed border-b-4 border-gray-700 shadow-md";
+            } else if (activeCount === 3) {
+                earthEmoji.innerText = "🌎";
+                earthEmoji.style.filter = "grayscale(0%)";
+                earthStatus.className = "text-xl md:text-2xl text-green-300 font-black mt-4 text-center animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]";
+                earthStatus.innerText = "¡Misión Cumplida! Aire, agua líquida y clima templado crean el hogar perfecto.";
+                
+                playSound('success');
+                btnNext.disabled = false;
+                btnNext.className = "bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 px-9 py-4 rounded-full font-extrabold transition-all text-lg shadow-2xl cursor-pointer animate-pulse border-b-4 border-emerald-600";
+            }
+        }
+
+        const soilData = {
+            surface: {
+                title: "🌱 1. Capa de Superficie (Humus)",
+                desc: "Es el manto biológico superior. Está compuesto por hojas secas, ramas y restos de insectos descompuestos. Funciona como una esponja natural gigante que retiene el agua y alimenta a los seres de la superficie.",
+                curiosity: "💡 Consejo de Owlaris: ¡Ese agradable olor a tierra mojada se debe a pequeños microorganismos sanos y muy trabajadores!"
+            },
+            middle: {
+                title: "🪱 2. Suelo de Cultivo Activo",
+                desc: "Es la capa vital donde crecen las raíces de las plantas. Está densamente poblada por lombrices de tierra que cavan túneles profundos, permitiendo que el aire oxigene el subsuelo y que el agua de lluvia penetre.",
+                curiosity: "💡 Consejo de Owlaris: ¡Un puñado pequeño de esta tierra sana contiene más microbios benéficos que seres humanos en toda la Tierra!"
+            },
+            bedrock: {
+                title: "🪨 3. La Fuerte Roca Madre",
+                desc: "Es el cimiento de roca del subsuelo. A lo largo de miles de años, el agua y las raíces agrietan lentamente esta roca sólida, liberando minerales esenciales que subirán para alimentar el suelo superior.",
+                curiosity: "💡 Consejo de Owlaris: ¡Sin esta roca sólida, las raíces de los grandes árboles no tendrían un soporte donde aferrarse!"
+            }
+        };
+
+        function inspectSoil(layer) {
+            playSound('click');
+            const data = soilData[layer];
+            const detailBox = document.getElementById('soil-detail');
+            detailBox.innerHTML = `
+                <div class="space-y-4 text-left animate-pulse-slow">
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">${data.title}</h3>
+                    <p class="text-lg md:text-xl text-white leading-relaxed font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">${data.desc}</p>
+                    <div class="bg-amber-950/90 p-4 rounded-2xl border-2 border-yellow-500/50 text-base font-extrabold text-yellow-200 shadow-inner leading-relaxed">
+                        ${data.curiosity}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectBioActor(actor) {
+            playSound('click');
+            selectedBioActor = actor;
+
+            document.querySelectorAll('.bio-actor-btn').forEach(btn => {
+                btn.classList.remove('border-teal-400', 'bg-teal-900/40');
+                btn.querySelector('.status-badge').innerText = "Seleccionar";
+                btn.querySelector('.status-badge').className = "status-badge bg-gray-600 text-sm px-3 py-1 rounded-full text-white font-bold";
+            });
+
+            let activeBtnId = "";
+            if (actor === 'worm') activeBtnId = 'bio-opt-1';
+            if (actor === 'fungi') activeBtnId = 'bio-opt-2';
+            if (actor === 'plant') activeBtnId = 'bio-opt-3';
+
+            const activeBtn = document.getElementById(activeBtnId);
+            activeBtn.classList.add('border-teal-400', 'bg-teal-900/40');
+            activeBtn.querySelector('.status-badge').innerText = "Listo";
+            activeBtn.querySelector('.status-badge').className = "status-badge bg-teal-400 text-sm px-3 py-1 rounded-full text-slate-950 font-extrabold shadow-md animate-bounce";
+
+            const feedback = document.getElementById('game-feedback');
+            feedback.innerText = "🎯 Elige a la derecha cuál es su labor perfecta.";
+        }
+
+        function matchWork(job) {
+            if (!selectedBioActor) {
+                playSound('error');
+                const feedback = document.getElementById('game-feedback');
+                feedback.innerText = "❌ ¡Debes seleccionar un organismo de la izquierda primero!";
+                return;
+            }
+
+            let success = false;
+            if (selectedBioActor === 'worm' && job === 'aeration') success = true;
+            if (selectedBioActor === 'fungi' && job === 'nutrients') success = true;
+            if (selectedBioActor === 'plant' && job === 'erosion') success = true;
+
+            const feedback = document.getElementById('game-feedback');
+
+            if (success) {
+                playSound('success');
+                matchedActors[selectedBioActor] = true;
+
+                let actorBtnId = "";
+                if (selectedBioActor === 'worm') actorBtnId = 'bio-opt-1';
+                if (selectedBioActor === 'fungi') actorBtnId = 'bio-opt-2';
+                if (selectedBioActor === 'plant') actorBtnId = 'bio-opt-3';
+
+                const actorBtn = document.getElementById(actorBtnId);
+                actorBtn.disabled = true;
+                actorBtn.className = "p-4 bg-emerald-950/45 border-2 border-emerald-500/35 rounded-2xl text-left flex items-center justify-between opacity-60";
+                actorBtn.querySelector('.status-badge').innerText = "✅ ¡Asignado!";
+                actorBtn.querySelector('.status-badge').className = "status-badge bg-emerald-400 text-xs px-2.5 py-1 rounded-full text-slate-950 font-extrabold shadow-md";
+
+                feedback.innerText = "🎉 ¡Perfecto! Trabajo ecológico asignado correctamente.";
+                selectedBioActor = null;
+
+                if (matchedActors.worm && matchedActors.fungi && matchedActors.plant) {
+                    playSound('success');
+                    feedback.className = "text-center text-lg md:text-xl font-black text-green-300 bg-slate-950 p-4 rounded-2xl border-4 border-green-400 animate-bounce shadow-2xl";
+                    feedback.innerText = "🏆 ¡Maravilloso! Conseguiste equilibrar toda la biodiversidad del suelo.";
+                    
+                    const btnNextBio = document.getElementById('btn-next-bio');
+                    btnNextBio.disabled = false;
+                    btnNextBio.className = "bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 px-9 py-4 rounded-full font-extrabold transition-all text-lg shadow-xl cursor-pointer animate-pulse border-b-4 border-emerald-600";
+                }
+            } else {
+                playSound('error');
+                feedback.innerText = "❌ ¡Casi! Ese organismo tiene otra tarea vital en el ecosistema.";
+            }
+        }
+
+        // Eventos de carga del documento
+        window.onload = function() {
+            generateStars();
+            goToStation(0);
+        }
+
+        window.onresize = generateStars;
+    </script>
+</body>
+</html>
